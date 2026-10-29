@@ -2152,7 +2152,25 @@ bool Interactor::check_validity()
 
     if (config_.configuration().controller.type == InterfaceData::Controller::Type::MacOS) {
         auto& mac = config_.configuration().macos;
-        if (mac.window_id == 0) {
+        bool window_found = false;
+        if (mac.window_id != 0) {
+            auto list_handle = MaaToolkitDesktopWindowListCreate();
+            OnScopeLeave([&]() { MaaToolkitDesktopWindowListDestroy(list_handle); });
+
+            if (!MaaToolkitDesktopWindowFindAll(list_handle)) {
+                LogError << "Failed to enumerate macOS windows";
+                return false;
+            }
+
+            for (MaaSize i = 0; i < MaaToolkitDesktopWindowListSize(list_handle); ++i) {
+                auto window = MaaToolkitDesktopWindowListAt(list_handle, i);
+                if (reinterpret_cast<uintptr_t>(MaaToolkitDesktopWindowGetHandle(window)) == mac.window_id) {
+                    window_found = true;
+                    break;
+                }
+            }
+        }
+        if (!window_found) {
             auto& name = config_.configuration().controller.name;
             auto controller_iter =
                 std::ranges::find(config_.interface_data().controller, name, std::mem_fn(&InterfaceData::Controller::name));
@@ -2162,8 +2180,7 @@ bool Interactor::check_validity()
                 return false;
             }
 
-            select_macos(controller_iter->macos);
-            return mac.window_id != 0;
+            return select_macos(controller_iter->macos) && mac.window_id != 0;
         }
     }
 

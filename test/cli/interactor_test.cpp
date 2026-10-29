@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
+#include <limits>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -210,7 +212,7 @@ int main()
 
     std::filesystem::remove_all(user_dir);
 
-    for (const uint32_t window_id : { 0u, 12345u }) {
+    for (const uint32_t window_id : { 0u, std::numeric_limits<uint32_t>::max() }) {
         const auto resource_dir = unique_temp_directory();
         const auto macos_user_dir = unique_temp_directory();
         std::filesystem::create_directories(resource_dir);
@@ -237,16 +239,23 @@ int main()
 })json";
         }
 
+        std::ifstream original_stream(macos_user_dir / "config/maa_pi_config.json");
+        const std::string original_config { std::istreambuf_iterator<char>(original_stream), std::istreambuf_iterator<char>() };
+        original_stream.close();
+
         {
             StreamRedirector redirector;
             Interactor interactor(macos_user_dir);
             require(interactor.load(resource_dir), "the untitled macOS window fixture should load");
             require(!interactor.run(), "the taskless macOS fixture should not start a controller");
             const bool prompted = redirector.output().str().find("Title regex:") != std::string::npos;
-            require(
-                prompted == (window_id == 0),
-                "direct execution should request window selection only when the saved window ID is missing");
+            require(prompted, "a missing or stale macOS window ID should request window selection");
         }
+
+        std::ifstream saved_stream(macos_user_dir / "config/maa_pi_config.json");
+        const std::string saved_config { std::istreambuf_iterator<char>(saved_stream), std::istreambuf_iterator<char>() };
+        saved_stream.close();
+        require(saved_config == original_config, "failed window selection should not save a stale window ID");
 
         std::filesystem::remove_all(resource_dir);
         std::filesystem::remove_all(macos_user_dir);

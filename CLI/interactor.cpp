@@ -2151,6 +2151,10 @@ bool Interactor::check_validity()
     }
 
     if (config_.configuration().controller.type == InterfaceData::Controller::Type::MacOS) {
+#if !defined(__APPLE__)
+        LogError << "MacOS controller is only supported on macOS";
+        return false;
+#endif
         auto& mac = config_.configuration().macos;
         bool window_found = false;
         if (mac.window_id != 0) {

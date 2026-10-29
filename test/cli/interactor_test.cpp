@@ -235,7 +235,7 @@ int main()
     "resource": "default-resource",
     "task": [],
     "macos": { "window_id": )json"
-                          << window_id << R"json(, "title": "" }
+                          << window_id << R"json(, "title": ")json" << (window_id == 0 ? "" : "stale-window") << R"json(" }
 })json";
         }
 
@@ -246,10 +246,14 @@ int main()
         {
             StreamRedirector redirector;
             Interactor interactor(macos_user_dir);
-            require(interactor.load(resource_dir), "the untitled macOS window fixture should load");
+            require(interactor.load(resource_dir), "the macOS window fixture should load");
             require(!interactor.run(), "the taskless macOS fixture should not start a controller");
             const bool prompted = redirector.output().str().find("Title regex:") != std::string::npos;
+#if defined(__APPLE__)
             require(prompted, "a missing or stale macOS window ID should request window selection");
+#else
+            require(!prompted, "an unsupported macOS controller should not request window selection");
+#endif
         }
 
         std::ifstream saved_stream(macos_user_dir / "config/maa_pi_config.json");

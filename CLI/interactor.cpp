@@ -2157,10 +2157,7 @@ bool Interactor::check_validity()
             auto list_handle = MaaToolkitDesktopWindowListCreate();
             OnScopeLeave([&]() { MaaToolkitDesktopWindowListDestroy(list_handle); });
 
-            if (!MaaToolkitDesktopWindowFindAll(list_handle)) {
-                LogError << "Failed to enumerate macOS windows";
-                return false;
-            }
+            MaaToolkitDesktopWindowFindAll(list_handle);
 
             for (MaaSize i = 0; i < MaaToolkitDesktopWindowListSize(list_handle); ++i) {
                 auto window = MaaToolkitDesktopWindowListAt(list_handle, i);

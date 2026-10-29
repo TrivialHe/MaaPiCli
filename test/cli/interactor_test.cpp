@@ -210,6 +210,48 @@ int main()
 
     std::filesystem::remove_all(user_dir);
 
+    for (const uint32_t window_id : { 0u, 12345u }) {
+        const auto resource_dir = unique_temp_directory();
+        const auto macos_user_dir = unique_temp_directory();
+        std::filesystem::create_directories(resource_dir);
+        std::filesystem::create_directories(macos_user_dir / "config");
+
+        {
+            std::ofstream interface_stream(resource_dir / "interface.json");
+            interface_stream << R"json(
+{
+    "interface_version": 2,
+    "controller": [ { "name": "macos-controller", "type": "MacOS" } ],
+    "resource": [ { "name": "default-resource", "path": [ "resource" ] } ]
+}
+)json";
+        }
+        {
+            std::ofstream config_stream(macos_user_dir / "config/maa_pi_config.json");
+            config_stream << R"json({
+    "controller": { "name": "macos-controller" },
+    "resource": "default-resource",
+    "task": [],
+    "macos": { "window_id": )json"
+                          << window_id << R"json(, "title": "" }
+})json";
+        }
+
+        {
+            StreamRedirector redirector;
+            Interactor interactor(macos_user_dir);
+            require(interactor.load(resource_dir), "the untitled macOS window fixture should load");
+            require(!interactor.run(), "the taskless macOS fixture should not start a controller");
+            const bool prompted = redirector.output().str().find("Title regex:") != std::string::npos;
+            require(
+                prompted == (window_id == 0),
+                "direct execution should request window selection only when the saved window ID is missing");
+        }
+
+        std::filesystem::remove_all(resource_dir);
+        std::filesystem::remove_all(macos_user_dir);
+    }
+
     {
         const auto resource_dir = unique_temp_directory();
         const auto user_dir = unique_temp_directory();

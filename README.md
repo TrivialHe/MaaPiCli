@@ -54,6 +54,10 @@ MaaFramework v5.15.0-beta.1 使用 MaaDeps v3.0.0，并支持 WebGPU 推理后�
 
 部署时请保留发行包中的 ONNX Runtime、WebGPU Dawn 及其他运行库。显式选择推理后端或设备的 CLI 配置目前尚未提供。
 
+## macOS 控制器
+
+macOS 控制器使用已保存的 `macos.window_id` 恢复连接。`macos.title` 可以为空：隐藏标题栏的窗口也可能没有标题，`-d` 运行不会因此再次要求选择窗口。尚未保存窗口 ID 时，仍需通过标题正则选择目标窗口；`^$` 可匹配空标题。
+
 ## Linux 控制器
 
 MaaFramework v5.13.0 新增 Linux 控制器。MaaPiCli 支持解析 ProjectInterface V2 的 `controller.linux` 配置，创建 `MaaLinuxControllerCreate` 控制器，并支持 `controller.display_expand` 截图缩放。

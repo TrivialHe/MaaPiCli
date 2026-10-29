@@ -2152,7 +2152,7 @@ bool Interactor::check_validity()
 
     if (config_.configuration().controller.type == InterfaceData::Controller::Type::MacOS) {
         auto& mac = config_.configuration().macos;
-        if (mac.window_id == 0 || mac.title.empty()) {
+        if (mac.window_id == 0) {
             auto& name = config_.configuration().controller.name;
             auto controller_iter =
                 std::ranges::find(config_.interface_data().controller, name, std::mem_fn(&InterfaceData::Controller::name));
